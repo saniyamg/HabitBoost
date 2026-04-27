@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitBoost Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Welcome</p>
+            <h1>{{ session['name'] }}</h1>
+            <p class="muted">Logged in as {{ session['role']|capitalize }}</p>
+        </div>
+        <a class="logout-link" href="{{ url_for('logout') }}">Logout</a>
+    </header>
+
+    <main class="dashboard-shell">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if session['role'] == 'admin' %}
+            <section class="stats-grid">
+                <article class="stat-card">
+                    <span>Total Users</span>
+                    <strong>{{ stats.total_users }}</strong>
+                </article>
+                <article class="stat-card">
+                    <span>Total Admins</span>
+                    <strong>{{ stats.total_admins }}</strong>
+                </article>
+                <article class="stat-card">
+                    <span>Total Habits</span>
+                    <strong>{{ stats.total_habits }}</strong>
+                </article>
+            </section>
+
+            <section class="table-panel">
+                <h2>All accounts</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Habits</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            <tr>
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.role|capitalize }}</td>
+                                <td>{{ user.habit_count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        {% else %}
+            <section class="table-panel add-habit-panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">Build your routine</p>
+                        <h2>Add a new habit</h2>
+                        <p class="muted">Type your own habit or tap one of the suggestions below.</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('add_habit') }}" class="habit-form">
+                    <label for="title">Habit name</label>
+                    <div class="habit-form-row">
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            placeholder="Example: Practice coding for 30 minutes"
+                            required
+                        >
+                        <button type="submit">Add Habit</button>
+                    </div>
+                </form>
+
+                <div class="suggestion-row">
+                    {% for suggestion in suggestions %}
+                        <button
+                            type="button"
+                            class="suggestion-chip"
+                            data-habit="{{ suggestion }}"
+                        >
+                            {{ suggestion }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="table-panel">
+                <h2>Your habits</h2>
+                <div class="habit-grid">
+                    {% for habit in habits %}
+                        <article class="habit-card">
+                            <h3>{{ habit.title }}</h3>
+                            <p><strong>Streak:</strong> {{ habit.streak }} days</p>
+                            <span class="status-pill">{{ habit.status }}</span>
+                        </article>
+                    {% else %}
+                        <p class="muted">No habits found yet.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
