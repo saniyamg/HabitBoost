@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitBoost Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-body">
+    <main class="login-shell">
+        <section class="brand-panel">
+            <p class="eyebrow">Daily consistency platform</p>
+            <h1>HabitBoost</h1>
+            <p class="hero-copy">Track routines, celebrate streaks, and give admins a clean view of team progress.</p>
+
+            <div class="sample-accounts">
+                <h2>Sample accounts</h2>
+                <div class="sample-card">
+                    <strong>Admin</strong>
+                    <span>Email: admin@habitboost.com</span>
+                    <span>Password: admin123</span>
+                </div>
+                <div class="sample-card">
+                    <strong>User</strong>
+                    <span>Email: alice@habitboost.com</span>
+                    <span>Password: user123</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="login-panel">
+            <form method="POST" class="login-form">
+                <h2>Sign in</h2>
+                <p class="muted">Choose whether you are logging in as a user or admin.</p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <label for="role">Login type</label>
+                <select id="role" name="role" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+
+                <button type="submit">Login</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
