@@ -7,16 +7,24 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="dashboard-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="topbar">
         <div>
             <p class="eyebrow">Welcome</p>
             <h1>{{ session['name'] }}</h1>
-            <p class="muted">Logged in as {{ session['role']|capitalize }}</p>
+            <p class="muted">Your personal habit dashboard</p>
         </div>
-        <a class="logout-link" href="{{ url_for('logout') }}">Logout</a>
+        <nav class="topbar-actions app-nav" aria-label="Primary navigation">
+            <a class="nav-link" href="{{ url_for('dashboard') }}" aria-current="page">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('progress') }}">Progress</a>
+            <a class="nav-link" href="{{ url_for('calendar_view') }}">Calendar</a>
+            <a class="nav-link" href="{{ url_for('new_habit') }}">Add Habit</a>
+            <a class="nav-link" href="{{ url_for('account') }}">Account</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
     </header>
 
-    <main class="dashboard-shell">
+    <main class="dashboard-shell" id="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -25,97 +33,140 @@
             {% endif %}
         {% endwith %}
 
-        {% if session['role'] == 'admin' %}
-            <section class="stats-grid">
-                <article class="stat-card">
-                    <span>Total Users</span>
-                    <strong>{{ stats.total_users }}</strong>
-                </article>
-                <article class="stat-card">
-                    <span>Total Admins</span>
-                    <strong>{{ stats.total_admins }}</strong>
-                </article>
-                <article class="stat-card">
-                    <span>Total Habits</span>
-                    <strong>{{ stats.total_habits }}</strong>
-                </article>
-            </section>
+        <section class="stats-grid">
+            <article class="stat-card">
+                <span>Today completed</span>
+                <strong>{{ stats.completed_today }}/{{ stats.habit_total }}</strong>
+            </article>
+            <article class="stat-card">
+                <span>Today progress</span>
+                <strong>{{ stats.today_percent }}%</strong>
+            </article>
+            <article class="stat-card">
+                <span>Best streak</span>
+                <strong>{{ stats.best_streak }} days</strong>
+            </article>
+        </section>
 
-            <section class="table-panel">
-                <h2>All accounts</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Habits</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                            <tr>
-                                <td>{{ user.name }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.role|capitalize }}</td>
-                                <td>{{ user.habit_count }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </section>
-        {% else %}
-            <section class="table-panel add-habit-panel">
-                <div class="panel-heading">
-                    <div>
-                        <p class="eyebrow">Build your routine</p>
-                        <h2>Add a new habit</h2>
-                        <p class="muted">Type your own habit or tap one of the suggestions below.</p>
-                    </div>
+        <section class="table-panel checkin-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Daily check-in</p>
+                    <h2>Your habits</h2>
+                    <p class="muted">Mark each habit when today&apos;s activity is complete.</p>
                 </div>
-
-                <form method="POST" action="{{ url_for('add_habit') }}" class="habit-form">
-                    <label for="title">Habit name</label>
-                    <div class="habit-form-row">
-                        <input
-                            type="text"
-                            id="title"
-                            name="title"
-                            placeholder="Example: Practice coding for 30 minutes"
-                            required
-                        >
-                        <button type="submit">Add Habit</button>
-                    </div>
-                </form>
-
-                <div class="suggestion-row">
-                    {% for suggestion in suggestions %}
-                        <button
-                            type="button"
-                            class="suggestion-chip"
-                            data-habit="{{ suggestion }}"
-                        >
-                            {{ suggestion }}
-                        </button>
-                    {% endfor %}
-                </div>
-            </section>
-
-            <section class="table-panel">
-                <h2>Your habits</h2>
-                <div class="habit-grid">
-                    {% for habit in habits %}
-                        <article class="habit-card">
-                            <h3>{{ habit.title }}</h3>
+            </div>
+            <div class="habit-grid">
+                {% for habit in habits %}
+                    <article
+                        class="habit-card"
+                        style="--habit-color: {{ habit.color }};"
+                        data-habit-id="{{ habit.id }}"
+                        data-habit-title="{{ habit.title }}"
+                        data-reminder-time="{{ habit.reminder_time or '' }}"
+                        data-completed-today="{{ habit.completed_today }}"
+                    >
+                        <div>
+                            <div class="habit-card-heading">
+                                <div>
+                                    <h3>{{ habit.title }}</h3>
+                                    <p class="habit-category">{{ habit.category }}</p>
+                                </div>
+                            </div>
                             <p><strong>Streak:</strong> {{ habit.streak }} days</p>
-                            <span class="status-pill">{{ habit.status }}</span>
-                        </article>
-                    {% else %}
-                        <p class="muted">No habits found yet.</p>
-                    {% endfor %}
+                            <form
+                                method="POST"
+                                action="{{ url_for('update_habit_reminder', habit_id=habit.id) }}"
+                                class="reminder-form"
+                            >
+                                <label for="reminder-{{ habit.id }}">Reminder</label>
+                                <div class="reminder-control">
+                                    <input
+                                        type="time"
+                                        id="reminder-{{ habit.id }}"
+                                        name="reminder_time"
+                                        value="{{ habit.reminder_time or '' }}"
+                                    >
+                                    <button type="submit">Save</button>
+                                </div>
+                            </form>
+                            <span class="status-pill {% if habit.completed_today %}complete{% endif %}">
+                                {% if habit.completed_today %}
+                                    Complete today
+                                {% else %}
+                                    {{ habit.status }}
+                                {% endif %}
+                            </span>
+                            <div class="badge-row" aria-label="Badges for {{ habit.title }}">
+                                {% for badge in habit.badges %}
+                                    <span
+                                        class="habit-badge {% if badge.earned %}earned{% else %}locked{% endif %}"
+                                        title="{{ badge.detail }}"
+                                    >
+                                        <span class="badge-icon">{{ badge.icon }}</span>
+                                        <span>{{ badge.label }}</span>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                            <p class="badge-summary">
+                                {{ habit.earned_badges }}/{{ habit.badges|length }} badges earned
+                            </p>
+                        </div>
+                        <div class="habit-actions">
+                            <form method="POST" action="{{ url_for('complete_habit', habit_id=habit.id) }}">
+                                {% if habit.completed_today %}
+                                    <button type="submit" class="checkpoint-button" disabled>
+                                        Checked In
+                                    </button>
+                                {% else %}
+                                    <label for="mood-{{ habit.id }}">How do you feel?</label>
+                                    <select id="mood-{{ habit.id }}" name="mood" required>
+                                        <option value="">Choose mood</option>
+                                        {% for value, label in moods %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+
+                                    <label for="note-{{ habit.id }}">Mini note</label>
+                                    <textarea
+                                        id="note-{{ habit.id }}"
+                                        name="note"
+                                        rows="2"
+                                        maxlength="240"
+                                        placeholder="Only did 10 minutes but still showed up."
+                                    ></textarea>
+
+                                    <button type="submit" class="checkpoint-button">
+                                        Check In Today
+                                    </button>
+                                {% endif %}
+                            </form>
+                            <a class="edit-habit-link" href="{{ url_for('edit_habit', habit_id=habit.id) }}">
+                                Edit Habit
+                            </a>
+                        </div>
+                    </article>
+                {% else %}
+                    <p class="muted">No habits found yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="table-panel reminder-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Reminders</p>
+                    <h2>Habit notifications</h2>
+                    <p class="muted">Browser reminders appear while this dashboard is open.</p>
                 </div>
-            </section>
-        {% endif %}
+                <button type="button" class="reminder-button" id="enable-reminders">
+                    Enable Notifications
+                </button>
+            </div>
+            <p class="reminder-status muted" id="reminder-status">
+                Add reminder times to habits, then keep this page open for alerts.
+            </p>
+        </section>
     </main>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
