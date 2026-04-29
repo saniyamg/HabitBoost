@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Habit - HabitBoost</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Edit habit</p>
+            <h1>{{ habit.title }}</h1>
+            <p class="muted">Change how this habit appears on your dashboard.</p>
+        </div>
+        <nav class="topbar-actions app-nav" aria-label="Primary navigation">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('progress') }}">Progress</a>
+            <a class="nav-link" href="{{ url_for('calendar_view') }}">Calendar</a>
+            <a class="nav-link" href="{{ url_for('new_habit') }}">Add Habit</a>
+            <a class="nav-link" href="{{ url_for('account') }}">Account</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-shell" id="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="table-panel account-panel">
+            <form method="POST" action="{{ url_for('edit_habit', habit_id=habit.id) }}" class="habit-form">
+                <label for="title">Habit name</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value="{{ habit.title }}"
+                    required
+                >
+
+                <div class="habit-options-grid single-option">
+                    <div>
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            {% for category in categories %}
+                                <option
+                                    value="{{ category }}"
+                                    {% if category == habit.category %}selected{% endif %}
+                                >
+                                    {{ category }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="reminder_time">Reminder time</label>
+                        <input
+                            type="time"
+                            id="reminder_time"
+                            name="reminder_time"
+                            value="{{ habit.reminder_time or '' }}"
+                        >
+                    </div>
+                </div>
+
+                <fieldset class="color-fieldset">
+                    <legend>Habit colour</legend>
+                    <div class="color-options">
+                        {% for value, label in colors %}
+                            <label class="color-choice">
+                                <input
+                                    type="radio"
+                                    name="color"
+                                    value="{{ value }}"
+                                    {% if value == habit.color %}checked{% endif %}
+                                >
+                                <span style="--habit-color: {{ value }};"></span>
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                <button type="submit">Save Habit</button>
+            </form>
+        </section>
+
+        <section class="table-panel danger-panel">
+            <div>
+                <h2>Delete habit</h2>
+                <p class="muted">This removes the habit and its progress history.</p>
+            </div>
+            <form method="POST" action="{{ url_for('delete_habit', habit_id=habit.id) }}">
+                <button
+                    type="submit"
+                    class="danger-button"
+                    onclick="return confirm('Delete this habit and its progress history?')"
+                >
+                    Delete Habit
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
