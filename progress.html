@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitBoost Progress</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Progress</p>
+            <h1>Weekly view</h1>
+            <p class="muted">Review your last seven days of habit completions.</p>
+        </div>
+        <nav class="topbar-actions app-nav" aria-label="Primary navigation">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('progress') }}" aria-current="page">Progress</a>
+            <a class="nav-link" href="{{ url_for('calendar_view') }}">Calendar</a>
+            <a class="nav-link" href="{{ url_for('new_habit') }}">Add Habit</a>
+            <a class="nav-link" href="{{ url_for('account') }}">Account</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-shell" id="main-content">
+        <section class="stats-grid" aria-label="Progress summary">
+            <article class="stat-card">
+                <span>Today completed</span>
+                <strong>
+                    {% if stats.habit_total %}
+                        {{ stats.completed_today }}/{{ stats.habit_total }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </strong>
+            </article>
+            <article class="stat-card">
+                <span>Today progress</span>
+                <strong>{{ stats.today_percent }}%</strong>
+            </article>
+            <article class="stat-card">
+                <span>Best streak</span>
+                <strong>{{ stats.best_streak }} days</strong>
+            </article>
+        </section>
+
+        <section class="table-panel progress-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Weekly completion</p>
+                    <h2>7-day habit line</h2>
+                    <p class="muted">{{ progress_chart.summary }}</p>
+                </div>
+            </div>
+
+            {% if stats.habit_total %}
+                <div class="line-chart" aria-label="Seven day habit completion chart">
+                    <svg viewBox="0 0 100 100" role="img" aria-labelledby="weekly-chart-title">
+                        <title id="weekly-chart-title">Seven day habit completion line chart</title>
+                        <line x1="8" y1="18" x2="92" y2="18" class="chart-grid"></line>
+                        <line x1="8" y1="54" x2="92" y2="54" class="chart-grid"></line>
+                        <line x1="8" y1="90" x2="92" y2="90" class="chart-axis"></line>
+                        {% for segment in progress_chart.segments %}
+                            <line
+                                x1="{{ segment.start.x }}"
+                                y1="{{ segment.start.y }}"
+                                x2="{{ segment.end.x }}"
+                                y2="{{ segment.end.y }}"
+                                class="chart-segment {{ segment.color }}"
+                            ></line>
+                        {% endfor %}
+                        {% for point in progress_chart.points %}
+                            <circle
+                                cx="{{ point.x }}"
+                                cy="{{ point.y }}"
+                                r="2.8"
+                                class="chart-dot {{ point.color }}"
+                            >
+                                <title>{{ point.date }}: {{ point.completed }} of {{ point.target }} habits</title>
+                            </circle>
+                        {% endfor %}
+                    </svg>
+
+                    <div class="chart-labels">
+                        {% for point in progress_chart.points %}
+                            <span>
+                                <b>{{ point.label }}</b>
+                                <small>{{ point.caption }}</small>
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="chart-legend" aria-label="Chart legend">
+                    <span><i class="legend-dot good" aria-hidden="true"></i>80-100%</span>
+                    <span><i class="legend-dot steady" aria-hidden="true"></i>45-79%</span>
+                    <span><i class="legend-dot behind" aria-hidden="true"></i>0-44%</span>
+                </div>
+            {% else %}
+                <p class="muted">Add your first habit to start building a progress chart.</p>
+            {% endif %}
+        </section>
+
+        <section class="table-panel mood-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Mood trends</p>
+                    <h2>How your habits feel</h2>
+                    <p class="muted">Mood check-ins from the last {{ history_days }} days.</p>
+                </div>
+            </div>
+
+            <div class="mood-grid">
+                {% for mood in mood_trends.moods %}
+                    <article class="mood-card {{ mood.value }}">
+                        <span>{{ mood.label }}</span>
+                        <strong>{{ mood.count }}</strong>
+                        <div class="mood-meter" aria-hidden="true">
+                            <span data-percent="{{ mood.percent }}"></span>
+                        </div>
+                        <p class="muted">{{ mood.percent }}% of mood check-ins</p>
+                    </article>
+                {% endfor %}
+            </div>
+
+            <div class="notes-panel">
+                <h3>Recent notes</h3>
+                {% if mood_trends.notes %}
+                    <ul>
+                        {% for note in mood_trends.notes %}
+                            <li>
+                                <strong>{{ note.title }}</strong>
+                                <span>{{ note.completed_on }} - {{ note.mood|capitalize }}</span>
+                                <p>{{ note.note }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="muted">No notes yet. Add one when you check in from the dashboard.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
