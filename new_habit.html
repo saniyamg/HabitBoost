@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Habit - HabitBoost</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Build your routine</p>
+            <h1>Add habit</h1>
+            <p class="muted">Create a new habit to track from today.</p>
+        </div>
+        <nav class="topbar-actions app-nav" aria-label="Primary navigation">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('progress') }}">Progress</a>
+            <a class="nav-link" href="{{ url_for('calendar_view') }}">Calendar</a>
+            <a class="nav-link" href="{{ url_for('new_habit') }}" aria-current="page">Add Habit</a>
+            <a class="nav-link" href="{{ url_for('account') }}">Account</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-shell" id="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="stats-grid" aria-label="Habit summary">
+            <article class="stat-card">
+                <span>Today completed</span>
+                <strong>{{ stats.completed_today }}/{{ stats.habit_total }}</strong>
+            </article>
+            <article class="stat-card">
+                <span>Today progress</span>
+                <strong>{{ stats.today_percent }}%</strong>
+            </article>
+            <article class="stat-card">
+                <span>Best streak</span>
+                <strong>{{ stats.best_streak }} days</strong>
+            </article>
+        </section>
+
+        <section class="table-panel add-habit-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">New habit</p>
+                    <h2>What do you want to track?</h2>
+                    <p class="muted">Type your own habit or choose one of the suggestions.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('add_habit') }}" class="habit-form">
+                <label for="title">Habit name</label>
+                <div class="habit-form-row">
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="Example: Practice coding for 30 minutes"
+                        required
+                    >
+                    <button type="submit">Add Habit</button>
+                </div>
+
+                <div class="habit-options-grid single-option">
+                    <div>
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="reminder_time">Reminder time</label>
+                        <input type="time" id="reminder_time" name="reminder_time">
+                    </div>
+                </div>
+
+                <fieldset class="color-fieldset">
+                    <legend>Habit colour</legend>
+                    <div class="color-options">
+                        {% for value, label in colors %}
+                            <label class="color-choice">
+                                <input
+                                    type="radio"
+                                    name="color"
+                                    value="{{ value }}"
+                                    {% if loop.first %}checked{% endif %}
+                                >
+                                <span style="--habit-color: {{ value }};"></span>
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            </form>
+
+            <div class="suggestion-row" aria-label="Habit suggestions">
+                {% for suggestion in suggestions %}
+                    <button
+                        type="button"
+                        class="suggestion-chip"
+                        data-habit="{{ suggestion }}"
+                    >
+                        {{ suggestion }}
+                    </button>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
