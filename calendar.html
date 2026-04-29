@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitBoost Calendar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Calendar</p>
+            <h1>{{ month_calendar.month_label }}</h1>
+            <p class="muted">Click a day to review completed habits.</p>
+        </div>
+        <nav class="topbar-actions app-nav" aria-label="Primary navigation">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('progress') }}">Progress</a>
+            <a class="nav-link" href="{{ url_for('calendar_view') }}" aria-current="page">Calendar</a>
+            <a class="nav-link" href="{{ url_for('new_habit') }}">Add Habit</a>
+            <a class="nav-link" href="{{ url_for('account') }}">Account</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-shell" id="main-content">
+        <section class="stats-grid" aria-label="Calendar summary">
+            <article class="stat-card">
+                <span>Today completed</span>
+                <strong>{{ stats.completed_today }}/{{ stats.habit_total }}</strong>
+            </article>
+            <article class="stat-card">
+                <span>Today progress</span>
+                <strong>{{ stats.today_percent }}%</strong>
+            </article>
+            <article class="stat-card">
+                <span>Best streak</span>
+                <strong>{{ stats.best_streak }} days</strong>
+            </article>
+        </section>
+
+        <section class="table-panel calendar-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Monthly view</p>
+                    <h2>{{ month_calendar.month_label }}</h2>
+                    <p class="muted">Daily colour shows how many habits were completed.</p>
+                </div>
+            </div>
+
+            <div class="calendar-grid calendar-grid-wide" aria-label="Monthly habit progress calendar">
+                {% for label in month_calendar.weekday_labels %}
+                    <span class="calendar-weekday">{{ label }}</span>
+                {% endfor %}
+                {% for week in month_calendar.weeks %}
+                    {% for day in week %}
+                        <button
+                            type="button"
+                            class="calendar-day {% if not day.in_month %}outside-month{% endif %} {% if day.is_today %}today{% endif %} {{ day.color }}"
+                            title="{{ day.date }}: {{ day.completed }} of {{ day.target }} habits"
+                            aria-label="{{ day.date }}: {{ day.completed }} of {{ day.target }} habits completed"
+                            data-date="{{ day.date }}"
+                            data-completed="{{ day.completed }}"
+                            data-target="{{ day.target }}"
+                            data-tasks="{{ day.tasks|join('||') }}"
+                            {% if not day.in_month %}disabled{% endif %}
+                        >
+                            {{ day.number }}
+                        </button>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            <div class="calendar-detail" id="calendar-detail" aria-live="polite">
+                <p class="eyebrow">Selected day</p>
+                <h3 id="calendar-detail-date">Choose a day</h3>
+                <p class="muted" id="calendar-detail-summary">Click a date to see which habits were completed.</p>
+                <ul id="calendar-detail-list"></ul>
+            </div>
+
+            <div class="chart-legend" aria-label="Calendar legend">
+                <span><i class="legend-dot good"></i>On track</span>
+                <span><i class="legend-dot steady"></i>Almost there</span>
+                <span><i class="legend-dot behind"></i>Needs focus</span>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
